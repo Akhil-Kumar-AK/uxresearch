@@ -1,0 +1,6 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {seed,progress,metrics,validateImport,templates,phases} from '../src/data.js';
+test('starter studies cover all six phases and calculate real metrics',()=>{const studies=seed();assert.equal(studies.length,6);assert.equal(new Set(studies.map(s=>s.phase)).size,6);assert.deepEqual(metrics(studies),{total:6,active:4,artifacts:23,completed:1});assert.equal(progress(studies[0]),67);assert.equal(progress(studies[3]),100);assert.equal(progress({artifacts:[]}),0);assert.equal(new Set(templates.map(t=>t.phase)).size,phases.length);});
+test('exports round-trip without losing artifact content',()=>{const studies=seed();const copy=JSON.parse(JSON.stringify({version:1,studies}));assert.deepEqual(validateImport(copy),studies);});
+test('invalid or duplicate data cannot enter the workspace',()=>{assert.throws(()=>validateImport({version:2,studies:[]}));const studies=seed();studies[0].artifacts[0].type='unknown';assert.throws(()=>validateImport({version:1,studies}));const duplicate=seed();duplicate[1].id=duplicate[0].id;assert.throws(()=>validateImport({version:1,studies:duplicate}));const badValues=seed();badValues[0].artifacts[0].values={Says:42};assert.throws(()=>validateImport({version:1,studies:badValues}));});
